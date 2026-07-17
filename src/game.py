@@ -5,7 +5,8 @@ from PySide6.QtWidgets import QWidget, QMainWindow
 from PySide6.QtCore import Qt
 import os
 from src.level import Level
-from src.magnets import Magnet
+from src.game_objects import Magnet, Ball, Hole
+from src.physics import boundary_collision
 
 class GameWindow(QMainWindow):
 	def __init__(self):
@@ -28,8 +29,8 @@ class GameWidget(QWidget):
 
 		#assets
 		self.background = QPixmap("assets/images/background_brown.png")
-		self.ball = QPixmap("assets/images/ball_blue_small.png")
-		self.hole = QPixmap("assets/images/hole.png")
+		self.ball = Ball()
+		self.hole = Hole()
 		self.magnet = Magnet()
 
 		self.level = Level(self)
@@ -42,27 +43,38 @@ class GameWidget(QWidget):
 
 		scaled_background = self.background.scaled(
 			self.size(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
-
 		painter.drawPixmap(0, 0, scaled_background)
-		painter.drawPixmap(self.hole_x, self.hole_y, self.hole)
-		painter.drawPixmap(self.ball_x, self.ball_y, self.ball)
-		print("painting")
-		painter.drawPixmap(self.magnet.x, self.magnet.y, self.magnet.sprite)
+
+		painter.drawPixmap(self.hole.x, self.hole.y, self.hole.sprite)
+		painter.drawPixmap(self.ball.x, self.ball.y, self.ball.sprite)
+		painter.drawPixmap(self.magnet.x, self.magnet.y, self.magnet.get_rotated_sprite())
+
+		painter.end()
 
 	# game.py
 	def keyPressEvent(self, event):
-		print("key received")
+
 		if event.key() == Qt.Key_W:
 			self.magnet.move_up()
+
 		elif event.key() == Qt.Key_S:
 			self.magnet.move_down()
+
 		elif event.key() == Qt.Key_A:
 			self.magnet.move_left()
+
 		elif event.key() == Qt.Key_D:
 			self.magnet.move_right()
+
 		elif event.key() == Qt.Key_Right:
 			self.magnet.rotate_right()
+
 		elif event.key() == Qt.Key_Left:
 			self.magnet.rotate_left()
-		self.update()
-		print("update requested")
+
+		self.update_game()
+
+	def update_game(self):
+	    boundary_collision(self.magnet, self)
+	    boundary_collision(self.ball, self)
+	    self.update()
